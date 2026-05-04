@@ -45,8 +45,8 @@
 .barcode-label     { font-size: clamp(7px,  0.8vw, 10px) !important; }
 
 .principle-number       { font-size: clamp(25px, 3.8vw, 40px) !important; }
-.principle-title-block h1 { font-size: clamp(17px, 2.5vw, 27px) !important; line-height: 1.06; }
-.principle-title-block .tagline { font-size: clamp(11px, 1.25vw, 15px) !important; }
+.principle-title-block h1 { font-size: clamp(20px, 3vw, 30px) !important; line-height: 1.06; }
+.principle-title-block .tagline { font-size: clamp(13px, 1.6vw, 18px) !important; }
 .principle-pagecount    { font-size: clamp(9px, 1vw, 12px) !important; }
 .scene-header           { font-size: clamp(9px, 1vw, 12px) !important; }
 .placeholder-icon       { font-size: clamp(13px, 1.6vw, 18px) !important; }
@@ -55,9 +55,9 @@
 .placeholder-timestamp  { font-size: clamp(8px, 1vw, 11px) !important; }
 .placeholder-hint       { font-size: clamp(7px, 0.85vw, 10px) !important; }
 
-.info-card-label        { font-size: clamp(8px, 0.95vw, 11px) !important; }
-.info-card-body         { font-size: clamp(12px, 1.38vw, 15px) !important; line-height: 1.45; }
-.annotation-chip        { font-size: clamp(9px, 1.1vw,  12px) !important; }
+.info-card-label        { font-size: clamp(10px, 1.15vw, 13px) !important; }
+.info-card-body         { font-size: clamp(14px, 1.7vw, 18px) !important; line-height: 1.5; }
+.annotation-chip        { font-size: clamp(11px, 1.3vw, 14px) !important; }
 .sfx-corner             { font-size: clamp(13px, 1.8vw, 20px) !important; }
 
 .report-header h1       { font-size: clamp(23px, 3.3vw, 34px) !important; }
@@ -379,15 +379,15 @@ body {
 
 .cover-front .cover-credentials {
   margin: clamp(10px, 1.8vw, 18px) auto;
-  width: 96%;
-  max-width: 520px;
-  background: rgba(0,0,0,0.5);
-  border: 2px solid var(--spider-yellow);
-  padding: clamp(10px, 1.5vw, 16px) clamp(14px, 1.8vw, 20px);
+  width: 98%;
+  max-width: 540px;
+  background: rgba(0,0,0,0.55);
+  border: 3px solid var(--spider-yellow);
+  padding: clamp(14px, 2vw, 22px) clamp(16px, 2.2vw, 26px);
   display: flex;
   flex-direction: column;
-  gap: clamp(7px, 1vw, 11px);
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+  gap: clamp(10px, 1.4vw, 16px);
+  box-shadow: inset 0 0 14px rgba(0,0,0,0.7), 4px 4px 0 rgba(255,214,10,0.25);
   position: relative;
   z-index: 3;
 }
@@ -413,17 +413,17 @@ body {
 
 .cover-front .cred-label {
   font-family: 'Times New Roman', Times, serif;
-  font-size: clamp(9px, 1.05vw, 12px) !important;
+  font-size: clamp(12px, 1.5vw, 16px) !important;
   letter-spacing: 0.15em;
   color: var(--spider-yellow);
   text-transform: uppercase;
-  opacity: 0.85;
-  margin-bottom: 3px;
+  opacity: 0.9;
+  margin-bottom: 4px;
 }
 
 .cover-front .cred-value {
   font-family: 'Times New Roman', Times, serif;
-  font-size: clamp(13px, 1.45vw, 17px) !important;
+  font-size: clamp(18px, 2.4vw, 26px) !important;
   color: var(--paper);
   font-weight: bold;
   letter-spacing: 0.02em;
@@ -2303,7 +2303,7 @@ let manualZoom = null;
 let currentZoom = 1;
 let pinchStartDistance = 0;
 let pinchStartZoom = 1;
-let currentViewMode = 'spread';
+let currentViewMode = getViewportWidth() <= MOBILE_BREAKPOINT ? 'single' : 'spread';
 let loopResetTimer = null;
 
 function getViewportWidth() {
@@ -2533,7 +2533,7 @@ const tocData = [
   { idx: 0,  num: "★",  label: "Front Cover" },
   ...PRINCIPLES.map((p, i) => ({ idx: i + 1, num: p.num, label: p.title })),
   { idx: 13, num: "CC", label: "Conclusion" },
-  { idx: 14, num: "R", label: "Reflection Report" }
+  { idx: 14, num: "R",  label: "Reflection Report" }
 ];
 
 tocData.forEach(item => {
@@ -2562,7 +2562,7 @@ function updateUI() {
   const visibleCur = cur >= visiblePageCount ? 0 : cur;
   currentPageEl.textContent = visibleCur + 1;
   prevBtn.disabled = visibleCur === 0;
-  nextBtn.disabled = visiblePageCount <= 1;
+  nextBtn.disabled = false;
   nextBtn.textContent = 'NEXT >';
   updateViewButtons();
   document.querySelectorAll('.toc-item').forEach(item => {
@@ -2844,7 +2844,6 @@ function handleFlipComplete(e) {
     loopResetTimer = window.setTimeout(resetBookToFront, 120);
     return;
   }
-
   updateUI();
 }
 
