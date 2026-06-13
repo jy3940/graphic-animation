@@ -280,7 +280,8 @@ function getGitHubConfig() {
     owner: 'jy3940',
     repo: 'graphic-animation',
     path: 'Poster_Studio.html',
-    token: ''
+    // Token is read from browser localStorage so it's never committed to the repo
+    token: (function(){ try { return localStorage.getItem('gh_token') || ''; } catch(e){ return ''; } })()
   };
 }
 
