@@ -271,6 +271,74 @@ function buildUpdatedHtml() {
   return '<!DOCTYPE html>\n' + root.outerHTML;
 }
 
+function githubBase64Encode(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+function getGitHubConfig() {
+  return {
+    owner: 'jy3940',
+    repo: 'graphic-animation',
+    path: 'Poster_Studio.html',
+    token: ''
+  };
+}
+
+async function saveToGitHub(html) {
+  var cfg = getGitHubConfig();
+  if (!cfg.token) {
+    alert('GitHub token diperlukan untuk menyimpan terus ke GitHub. Simpan sebagai fail HTML atau jalankan Node server.');
+    throw new Error('GitHub token tidak ditetapkan');
+  }
+
+  var apiUrl = 'https://api.github.com/repos/' + encodeURIComponent(cfg.owner) + '/' + encodeURIComponent(cfg.repo) + '/contents/' + encodeURIComponent(cfg.path);
+  var headers = {
+    'Authorization': 'token ' + cfg.token,
+    'Accept': 'application/vnd.github+json'
+  };
+
+  var sha = null;
+  try {
+    var getResp = await fetch(apiUrl, { method: 'GET', headers: headers });
+    if (getResp.ok) {
+      var data = await getResp.json();
+      if (data && data.sha) sha = data.sha;
+    }
+  } catch (err) {
+    console.warn('GitHub GET content failed:', err);
+  }
+
+  var requestBody = {
+    message: 'Public browser save: ' + new Date().toISOString(),
+    content: githubBase64Encode(html),
+    sha: sha || undefined,
+    branch: 'main'
+  };
+
+  var putResp = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!putResp.ok) {
+    var errorText = '';
+    try {
+      var errorData = await putResp.json();
+      errorText = errorData.message || JSON.stringify(errorData);
+    } catch (e) {
+      errorText = putResp.statusText;
+    }
+    throw new Error('GitHub update failed: ' + errorText);
+  }
+
+  var result = await putResp.json();
+  console.log('Saved to GitHub:', result);
+  savedStatus = 'disimpan ke GitHub ✓ ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  updateStatus();
+  alert('HTML berjaya disimpan ke GitHub! Muat semula halaman selepas beberapa saat untuk melihat kemas kini.');
+}
+
 function downloadHtmlFile(html) {
   var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   var url = URL.createObjectURL(blob);
@@ -300,25 +368,27 @@ function backupDraftLocally() {
 }
 
 async function saveEdits() {
-  if (!socket || !socket.connected) {
-    alert('Tidak bersambung ke pelayan. Sila muat semula halaman.');
-    return;
-  }
   backupDraftLocally();
   setEditing(false);
 
   try {
     var html = buildUpdatedHtml();
-    socket.emit('save-poster', {
-      html: html,
-      clientId: clientId
-    });
     savedStatus = 'menyimpan...';
     updateStatus();
+
+    if (socket && socket.connected) {
+      socket.emit('save-poster', {
+        html: html,
+        clientId: clientId
+      });
+    } else {
+      await saveToGitHub(html);
+    }
   } catch (err) {
+    console.error(err);
     savedStatus = 'gagal simpan';
     updateStatus();
-    alert('Gagal menyimpan. Sila cuba lagi.');
+    alert('Gagal menyimpan. Sila cuba lagi. ' + (err.message || '')); 
   }
 }
 function exportPDF() {
